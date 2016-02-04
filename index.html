@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+	<script src="jquery-2.1.4.min.js"></script>
+</head>
+<body>
+	<img crossOrigin="Anonymous" src="" id="saver">
+	<script type="text/javascript">
+		$(function(){
+			url = 'load'
+
+			switch(url){
+				case 'save':
+					saveImage()
+					break;
+				case 'load':
+					loadImg()
+					break;
+			}
+
+			function saveImage(){
+				delay = 5000;
+				$.ajax({
+				    url: 'http://192.168.137.3/assets/modules/synchronize/testImageSend.php',             // указываем URL и
+				    dataType : "json",                     // тип загружаемых данных
+				    success: function (data, textStatus) { // вешаем свой обработчик на функцию success
+				    	lSrc = data['largeSource'];
+				    	pSrc = data['previewSource'];
+
+				    	i = 0;
+				    	function readyImg(){
+				    		if(i >= data['preview'].length) return;
+				    		name = data['preview'][i].substring(0, data['preview'][i].length-4);
+	        				bannerImage = document.getElementById('saver');
+							$('#saver').attr('src', pSrc+data['preview'][i]);							
+							imgData = getBase64Image(bannerImage);
+							localStorage.setItem(data['preview'][i].substring(0, data['preview'][i].length-4), imgData);
+							$('#saver').load(function(){
+								i++;
+								readyImg();
+							})
+				    	}
+				    	readyImg();
+				    }               
+				});
+
+							
+							function getBase64Image(img) {
+								var canvas = document.createElement("canvas");
+								canvas.width = img.width;
+								canvas.height = img.height;
+
+								var ctx = canvas.getContext("2d");
+								ctx.drawImage(img, 0, 0);
+
+								var dataURL = canvas.toDataURL("image/jpg");
+
+								return dataURL.replace(/^data:image\/(png|jpg);base64,/, "");
+							}
+
+			}
+
+
+
+			function loadImg(){
+				$.ajax({
+				    url: 'http://192.168.137.3/assets/modules/synchronize/testImageSend.php',             // указываем URL и
+				    dataType : "json",                     // тип загружаемых данных
+				    success: function (data, textStatus) { // вешаем свой обработчик на функцию success
+				    	lSrc = data['largeSource'];
+				    	pSrc = data['previewSource'];
+				        $.each(data, function(key, val) {    // обрабатываем полученные данные
+				        	for(n in val){
+				        		switch(key){
+				        			case 'preview':
+				        			var picture = localStorage.getItem(val[n].substring(0, val[n].length-4));
+				        			$('body').append('<img src="data:image/png;base64,'+picture+'" />')
+				        			break;
+				        			// case 'large':
+				        			// 	saveImage(lSrc+val[n], val[n]);
+				        			// 	break;
+				        		}
+				        	}
+				        });
+				    }               
+				});
+
+
+			}
+
+		})
+</script>
+</body>
+</html>
